@@ -9,6 +9,8 @@ import time
 import pandas as pd
 
 def calculate(table, element, mode, num) :
+      if mode == 'single' : 
+            element = [element]
       print('function start')
       collection = make_client(table)
       print('mongo connect success')
@@ -36,8 +38,8 @@ def make_medicodeList(collection, element, mode) :
             ], allowDiskUse=True
             )
       else :
-            if (str(type(element)) == "<class 'str'>"):
-                  element = [element]
+            # if (str(type(element)) == "<class 'str'>"):
+            #       element = [element]
             cursor=collection.aggregate(pipeline=[
             {
               "$match" : {
