@@ -12,19 +12,19 @@ import numpy as np
 #import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import plotly.express as px
-from sshtunnel import SSHTunnelForwarder
 import flask
 from io import StringIO
 import requests
-
+#pd.options.mode.chained_assignment=None
 PAGE_SIZE = 10
 result_df = pd.DataFrame()
 
 def get_atc() :
-    atc = make_client('atc')
-    atc_df = pd.DataFrame.from_dict(atc.find())
-    atc_code = atc_df['주성분코드'].tolist()
-    atc_spec = atc_df['Spec'].tolist()
+    atc_df=pd.read_csv('code_list.csv',encoding='utf-8')
+    #atc = make_client('atc')
+    #atc_df = pd.DataFrame.from_dict(atc.find())
+    atc_code = atc_df['주성분코드'].to_list()
+    atc_spec = atc_df['Spec'].to_list()
     return [atc_code, atc_spec]
 
 ## dataframe setting ##
@@ -106,7 +106,6 @@ def make_table(value) :
     return [[{"name" : i, "id" : i} for i in result_df.columns], len(result_df)//PAGE_SIZE + 1]
     
 def make_graph(value) :
-    global result_df
     if value != None :
         print("graph")
         # fig = display_1(df2)
@@ -134,7 +133,7 @@ def create_dashboard1(server) :
                 html.Div(id = 'input-title', className='search', children= '약품일반성분명코드'),
                 html.Div(dcc.Dropdown(id = 'code_input',
                      options=[
-                         {'label' : a+' : '+b, 'value' : a} for a, b in zip(atc_list[0], atc_list[1])],
+                         {'label' : str(a) + ' : ' + str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
                          placeholder = '원하는 성분 선택',multi = True,
                         value = None,
                         style = {'width' : '80%'}
@@ -147,19 +146,59 @@ def create_dashboard1(server) :
             children=html.Div(className='wrapper', children = [
             html.Div(className='item',
                 children = [html.Div(id = 'table', children=[
-                    #html.Div(id='download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'csv_link', href="/dashboard1/download_csv")]),
                     dt.DataTable(id = 'datatable-paging',
-                    page_current = 0, page_size = PAGE_SIZE,
+                    columns=[
+                        {'name': i, 'id': i, 'deletable': True} for i in sorted(result_df.columns)
+                    ],
+                    page_current = 0,
+                    page_size = PAGE_SIZE,
                     page_action = 'custom',
-                    export_format='csv')],style = {'display' : 'none'})]),
+                    export_format='csv',
+                    sort_action='custom',
+                    sort_mode='multi',
+                    filter_action='custom',
+                    filter_query='',
+                    sort_by=[])
+                    ],
+            style = {'display' : 'none'})]),
             html.Div(className='item', children = [html.Div(id = 'graph', style = {'display' : 'none'})])            
         ])
         ),      
-        # html.Div(id = 'intermediate', style = {'display' : 'none'})
-        # html.Div(id = 'download', children = [html.A(html.Button('다운로드', id = 'download_button', n_clicks = 0), id = 'csv_link', href = '/dash/urlToDownload')])
     ])
     init_callback(app)
     return app
+
+operators = [['ge ', '>='],
+             ['le ', '<='],
+             ['lt ', '<'],
+             ['gt ', '>'],
+             ['ne ', '!='],
+             ['eq ', '='],
+             ['contains '],
+             ['datestartswith ']]
+
+def split_filter_part(filter_part):
+    for operator_type in operators:
+        for operator in operator_type:
+            if operator in filter_part:
+                name_part, value_part = filter_part.split(operator, 1)
+                name = name_part[name_part.find('{') + 1: name_part.rfind('}')]
+
+                value_part = value_part.strip()
+                v0 = value_part[0]
+                if (v0 == value_part[-1] and v0 in ("'", '"', '`')):
+                    value = value_part[1: -1].replace('\\' + v0, v0)
+                else:
+                    try:
+                        value = float(value_part)
+                    except ValueError:
+                        value = value_part
+
+                # word operators need spaces after them in the filter string,
+                # but we don't want these later
+                return name, operator_type[0].strip(), value
+
+    return [None] * 3
 
 def init_callback(app) : 
     @app.callback(
@@ -178,15 +217,34 @@ def init_callback(app) :
     @app.callback(
         Output('datatable-paging', 'data'),
         [Input('submit_button', 'n_clicks'), Input('datatable-paging', "page_current"),
-        Input('datatable-paging', "page_size")]
+        Input('datatable-paging', "page_size"),
+        Input('datatable-paging','sort_by'),
+        Input('datatable-paging', 'filter_query')]
     )
-    def update_paging(n_clicks, page_current, page_size) :
-        print('paging {} {}'.format(page_current, page_size))
-        # if data != None : 
-        #     df = pd.read_json(data, orient='split')
-        global result_df
-        return result_df.iloc[
-            page_current*page_size : (page_current + 1) * page_size
+    def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
+        filtering_expressions = filter.split(' && ')
+        dff=result_df
+        for filter_part in filtering_expressions:
+            col_name, operator, filter_value = split_filter_part(filter_part)
+            if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+                dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+            elif operator == 'contains':
+                dff = dff.loc[dff[col_name].str.contains(filter_value)]
+            elif operator == 'datestartswith':
+                dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+        if len(sort_by):
+            dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+        page=page_current
+        size=page_size
+        return dff.iloc[
+        page*size : (page + 1) * size
         ].to_dict('records')
 
     @app.callback(
@@ -197,24 +255,3 @@ def init_callback(app) :
     def update_graph(n_clicks, value) :
         print('graph {} {}'.format(n_clicks, value))
         return make_graph(value)
-    
-    # @app.server.route('/dashboard1/download_csv')
-    # def download_csv() :
-    #     start = time.time()
-    #     output_stream = StringIO()
-    #     output_stream.write(u'\ufeff')
-    #     global result_df
-    #     result_df = result_df.set_index("순번")
-    #     print(time.time()-start)
-    #     print("dataframe ready")
-    #     start = time.time()
-    #     result_df.to_csv(output_stream)
-    #     print(time.time()-start)
-    #     print("csv ready")
-    #     response = flask.Response(
-    #         output_stream.getvalue(),
-    #         mimetype='text/csv',
-    #         content_type='application/octet-stream',
-    #     )
-    #     response.headers["Content-Disposition"] = "attachment; filename=post_export.csv"
-    #     return response
