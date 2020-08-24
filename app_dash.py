@@ -196,20 +196,12 @@ def init_callback(app) :
     def update_graph(n_clicks, value) :
         print('graph {} {}'.format(n_clicks, value))
         return make_graph(value)
-        # if data != None :
-        #     #df = pd.read_json(data, orient='split')
-        #     return make_graph(result_df, value)
-        # else :
-        #     #df = pd.DataFrame()
-        #     return make_graph(result_df, None)
     
     @app.server.route('/dashboard1/download_csv')
     def download_csv() :
         start = time.time()
         output_stream = StringIO()
         output_stream.write(u'\ufeff')
-        #global result_json
-        #df = pd.read_json(result_json, orient='split')
         global result_df
         result_df = result_df.set_index("순번")
         print(time.time()-start)
@@ -225,40 +217,3 @@ def init_callback(app) :
         )
         response.headers["Content-Disposition"] = "attachment; filename=post_export.csv"
         return response
-
-    # @app.callback(
-    #     Output('csv_link', 'href'),
-    #     [Input('code_input', 'value')]
-    # )
-    # def update_link(value) :
-    #     print("click")
-    #     return '/dash/urlToDownload?value={}'.format(value)
-
-    # @app.server.route('/dash/urlToDownload')
-    # def download_csv() :
-    #     value = flask.request.args.get('value')
-    #     print("download")
-    #     str_io = io.StringIO()
-    #     dict = [
-    #         {'name' : 'hello', 'age' : 10},
-    #         {'name' : 'world', 'age' : 12}
-    #     ]
-    #     testcsv = pd.DataFrame(dict).reset_index(drop=True)
-    #     #testcsv = df[:15]
-    #     testcsv.to_csv(str_io)
-    #     mem = io.BytesIO()
-    #     mem.write(str_io.getvalue().encode('utf-8'))
-    #     mem.seek(0)
-    #     str_io.close()
-    #     return flask.send_file(mem,
-    #      mimetype = 'text/csv',
-    #      attachment_filename = 'downloadFile.csv',
-    #      as_attachment = True)
-
-
-
-
-
-# if __name__ == '__main__':
-#     app = create_dashboard1()
-#     app.run_server(debug=True)

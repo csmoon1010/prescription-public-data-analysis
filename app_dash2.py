@@ -11,15 +11,7 @@ from sshtunnel import SSHTunnelForwarder
 import functions2
 from connect_mongo import make_client
 from mlxtend.preprocessing import TransactionEncoder
-from mlxtend.frequent_patterns import apriori, association_rules,fpgrowth
-
-# atc_df = pd.DataFrame.from_dict(atc.find({}, {'_id' : 0, '주성분코드' : 1}))
-# atc_list = atc_df['주성분코드'].tolist()
-
-# atc_list = []
-# for i, record in enumerate(atc.find({}, {'_id':0, '주성분코드' : 1})) :
-#     atc_list.append(record.split)
-# pprint.pprint(atc_list[:5])
+from mlxtend.frequent_patterns import apriori, association_rules, fpgrowth
 
 def get_atc() :
     atc = make_client('atc')
@@ -88,9 +80,9 @@ def create_dashboard2(server) :
             html.Div(children = '지지도 입력'),
             dcc.Slider(
                 id='num',
-                min=0.01,
+                min=0.001,
                 max=100,
-                step=0.01,
+                step=0.001,
                 value=10,
                 included=False,
                 marks= {
@@ -106,7 +98,7 @@ def create_dashboard2(server) :
             children=html.Div(id = 'table', children = dt.DataTable(id = 'datatable-paging',
             page_current = 0,
             page_size = PAGE_SIZE,
-            page_action = 'custom'), style = {'display' : 'none'})
+            page_action = 'custom'), style = {'display' : 'none','width':'40%'})
         ),
         html.Div(id = 'intermediate_atc', style = {'display' : 'none'}),
         html.Div(id = 'intermediate', style = {'display' : 'none'})
@@ -133,16 +125,6 @@ def init_callback(app, atc_list) :
         else :
             op = []
             return [op, '데이터 필터링 조합을 선택해주세요', True, None]
-    
-    # @app.callback(
-    #     Output('intermediate_atc', 'children'),
-    #     [Input('select2', 'value')]
-    #     [State('intermediate_atc', 'children')]
-    # )
-    # def put_atc(selected2, intermediate) :
-    #     if selected2 != None and intermediate == None : 
-    #         return json.dumps(get_atc())
-    #     else : return intermediate
 
 
     @app.callback(
@@ -150,9 +132,8 @@ def init_callback(app, atc_list) :
         [Input('select1', 'value'), Input('select2', 'value')],
         [State('elements', 'value')]
     )
+
     def update_elements(selected1, selected2, original) :
-        # atc_list = intermediate
-        # op = [{'label' : a+' : '+b, 'value' : a} for a, b in zip(atc_list[0], atc_list[1])]
         if selected2 == None :
              result = [True, False, None]
         else :
