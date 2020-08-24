@@ -1,0 +1,119 @@
+@font-face{
+    font-family: "Nanum Font";
+    src: url("../../assets/NanumSquareR.otf")
+}
+@font-face{
+    font-family: "Bold Font";
+    src: url("../../assets/NanumSquareEB.otf")
+}
+body{
+    background-color: #f2f2f2;
+    font-family: "Nanum Font";
+}
+h1{
+    font-size: 45px;
+    font-family : "Bold Font";
+    margin-block-start:0.3em;
+}
+
+ul{
+    list-style:none;
+    text-align:center;
+    padding-inline-start: 0px;
+}
+li{
+    list-style:none;
+}
+a{
+    height:100%;
+    width:100%;
+    text-decoration:none;
+    color:#1e1e1e
+}
+a:hover .item-title{
+    color: rgb(233, 131, 0);
+}
+a:hover .item-explain{
+    color: black;
+}
+a:hover .item-button{
+    background-color: white;
+    color : rgb(233, 131, 0);
+    border-color: rgb(233, 131, 0);
+}
+
+
+.contents{
+    display:block;
+    width: 100%;
+    overflow:hidden;
+    margin: 50px;
+}
+
+.container li{
+    display:inline-block;
+    overflow: hidden;
+    width: 400px;
+    height: 250px;
+    margin: 20px 40px 20px 40px;
+}
+.items{
+    position:relative;
+    display: block;
+}
+.item-title{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    top:20%;
+    font-size: 25px;
+    font-weight: bold;
+    color: white;
+}
+.item-explain{
+    position:absolute;
+    width: 60%;
+    left:50%;
+    transform:translateX(-50%);
+    top:40%;
+    color:white;
+}
+.item-button{
+    left:50%;
+    transform:translateX(-50%);
+    position: absolute;
+    bottom: 20%;
+
+    width: 120px;
+    height: 40px;
+    background : transparent;
+    color: white;
+    font-weight:bold;
+    border-width: 3px;
+    border-color: white;
+    border-style: solid;
+    cursor: pointer;
+}
+
+#logo{
+    width: 130px;
+    height: auto;
+}
+#header{
+    text-align: center;
+    margin-top: 100px;
+    margin-bottom: 70px;
+}
+#box1{
+    background: rgb(233, 131, 0);
+}
+#box1:hover{
+    background: rgb(233, 131, 0, 0.3);
+}
+
+#box2{
+    background: rgb(86, 90, 92);
+}
+#box2:hover{
+    background: rgb(86, 90, 92, 0.3);
+}

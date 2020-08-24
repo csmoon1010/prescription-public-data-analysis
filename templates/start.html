@@ -1,14 +1,36 @@
 <!doctype html>
 <html>
     <head>
-        <title>대웅 프로젝트</title>
+        <meta charset = "UTF-8">
+        <title>의약품 대시보드</title>
         <meta charset = "utf-8">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
     </head>
 
     <body>
-      <div><h3> 의약품 대시보드</div>
-      <a href = "/dashboard1/">복약순응도</a>
-      <br>
-      <a href = "/dashboard2/">병용처방패턴</a>
+      <div id='header'>
+        <img id='logo' src="{{ url_for('static', filename='image/daewoong_logo.png')}}">
+        <h1>
+          <a href='/'>의약품 대시보드</a>
+        </h1>
+      </div>
+      <div id = 'contents'>
+        <ul class = 'container'>
+          <li>
+             <a href= "/dashboard1/" id = 'box1' class='items'>
+              <span class='item-title'>복약순응도</span>
+              <span class='item-explain'>환자별 내원일자 간격과 처방일수를 통해 추정한 복약순응도</span>
+              <button class='item-button' id='button1'>바로가기</button>
+             </a>
+          </li>
+          <li>
+             <a href= "/dashboard2/" id = 'box2' class='items'>
+              <span class='item-title'>병용처방패턴</span>
+              <span class='item-explain'>특정 성분과의 연관규칙분석을 통한 다빈도 처방성분과 패턴</span>
+              <button class='item-button' id='button2'>바로가기</button>
+             </a>
+          </li>
+        </ul>        
+      </div>
     </body>
 </html>
