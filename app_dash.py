@@ -16,6 +16,7 @@ from sshtunnel import SSHTunnelForwarder
 import flask
 from io import StringIO
 import requests
+import math
 
 PAGE_SIZE = 10
 result_df = pd.DataFrame()
@@ -103,7 +104,8 @@ def make_table(value) :
         result_df = pd.DataFrame()
     #result_json = df.to_json(orient='split')
     #return [[{"name" : i, "id" : i} for i in df.columns], result_json, len(df)//PAGE_SIZE + 1]
-    return [[{"name" : i, "id" : i} for i in result_df.columns], len(result_df)//PAGE_SIZE + 1]
+    total_page = math.ceil(len(result_df)/PAGE_SIZE)
+    return [[{"name" : i, "id" : i} for i in result_df.columns], total_page]
     
 def make_graph(value) :
     global result_df
@@ -131,15 +133,14 @@ def create_dashboard1(server) :
             ]
         ),
         html.Div(id = 'input-container', children = [
-                html.Div(id = 'input-title', className='search', children= '약품일반성분명코드'),
-                html.Div(dcc.Dropdown(id = 'code_input',
+                html.Div(id = 'input-title', children= '약품일반성분명코드'),
+                html.Div(id = 'input-dropdown', className='search', children= [dcc.Dropdown(id = 'code_input',
                      options=[
                          {'label' : a+' : '+b, 'value' : a} for a, b in zip(atc_list[0], atc_list[1])],
                          placeholder = '원하는 성분 선택',multi = True,
-                        value = None,
-                        style = {'width' : '80%'}
-                        )
-                        ),
+                        value = None
+                    )]
+                ),
                 html.Button(id = 'submit_button', className='search', children='검색', n_clicks = 0)]),
         dcc.Loading(
             id="loading-table",

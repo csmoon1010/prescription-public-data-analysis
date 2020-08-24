@@ -4,6 +4,7 @@
 }
 body{
     background-color: #F2F2F2;
+    margin-bottom: 20px;
 }
 
 .wrapper{
@@ -49,14 +50,19 @@ body{
 }
 #input-title{
     font-size: 17px;
-    margin-right: 30px;
+    margin-bottom: 10px;
 }
-#input-box{
-    margin-right: 10px;
+#input-dropdown{
+    width: 70%;
+    margin-right: 15px;
+}
+#code-input{
+    width: 100%;
 }
 
 #submit_button{
     font-size: 13px;
+    height : 40px;
     background-color: white;
 }
 
@@ -70,4 +76,9 @@ body{
 
 #graph{
     margin-bottom: 40px;
+}
+
+input[type="text"]{
+    padding: 0px 0px 0px 0px;
+    min-width: 30px;
 }
