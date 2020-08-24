@@ -147,10 +147,11 @@ def create_dashboard1(server) :
             children=html.Div(className='wrapper', children = [
             html.Div(className='item',
                 children = [html.Div(id = 'table', children=[
-                    html.Div(id='download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'csv_link', href="/dashboard1/download_csv")]),
+                    #html.Div(id='download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'csv_link', href="/dashboard1/download_csv")]),
                     dt.DataTable(id = 'datatable-paging',
                     page_current = 0, page_size = PAGE_SIZE,
-                    page_action = 'custom')],style = {'display' : 'none'})]),
+                    page_action = 'custom',
+                    export_format='csv')],style = {'display' : 'none'})]),
             html.Div(className='item', children = [html.Div(id = 'graph', style = {'display' : 'none'})])            
         ])
         ),      
@@ -197,23 +198,23 @@ def init_callback(app) :
         print('graph {} {}'.format(n_clicks, value))
         return make_graph(value)
     
-    @app.server.route('/dashboard1/download_csv')
-    def download_csv() :
-        start = time.time()
-        output_stream = StringIO()
-        output_stream.write(u'\ufeff')
-        global result_df
-        result_df = result_df.set_index("순번")
-        print(time.time()-start)
-        print("dataframe ready")
-        start = time.time()
-        result_df.to_csv(output_stream)
-        print(time.time()-start)
-        print("csv ready")
-        response = flask.Response(
-            output_stream.getvalue(),
-            mimetype='text/csv',
-            content_type='application/octet-stream',
-        )
-        response.headers["Content-Disposition"] = "attachment; filename=post_export.csv"
-        return response
+    # @app.server.route('/dashboard1/download_csv')
+    # def download_csv() :
+    #     start = time.time()
+    #     output_stream = StringIO()
+    #     output_stream.write(u'\ufeff')
+    #     global result_df
+    #     result_df = result_df.set_index("순번")
+    #     print(time.time()-start)
+    #     print("dataframe ready")
+    #     start = time.time()
+    #     result_df.to_csv(output_stream)
+    #     print(time.time()-start)
+    #     print("csv ready")
+    #     response = flask.Response(
+    #         output_stream.getvalue(),
+    #         mimetype='text/csv',
+    #         content_type='application/octet-stream',
+    #     )
+    #     response.headers["Content-Disposition"] = "attachment; filename=post_export.csv"
+    #     return response

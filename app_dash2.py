@@ -13,6 +13,8 @@ from connect_mongo import make_client
 from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import apriori, association_rules, fpgrowth
 
+PAGE_SIZE = 10
+
 def get_atc() :
     atc = make_client('atc')
     atc_df = pd.DataFrame.from_dict(atc.find())
@@ -31,14 +33,13 @@ def make_table(table, element, mode, num) :
     if table == None :
         df = pd.DataFrame()
     else : df = functions2.calculate(table, element, mode, num)
-    return [[{"name" : i, "id" : i} for i in df.columns], df.to_json(orient='split')]
+    return [[{"name" : i, "id" : i} for i in df.columns],  df.to_json(orient='split'), len(df)//PAGE_SIZE + 1]
       
 
 def create_dashboard2(server) :
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     app = dash.Dash(__name__, server = server, url_base_pathname = '/dashboard2/', external_stylesheets=external_stylesheets)
     selected = []
-    PAGE_SIZE = 10
     atc_list = get_atc()
     app.layout = html.Div([
         html.H3(id = 'title', children = '병용처방 패턴파악 대시보드'),
@@ -92,13 +93,15 @@ def create_dashboard2(server) :
         ]),
         html.Button('Submit', id = 'submit_button', n_clicks = 0), 
         html.Br(),
+        html.Br(),
         dcc.Loading(
             id="loading-table",
             type="default",
-            children=html.Div(id = 'table', children = dt.DataTable(id = 'datatable-paging',
+            children=[html.Div(id = 'table', children = dt.DataTable(id = 'datatable-paging',
             page_current = 0,
             page_size = PAGE_SIZE,
-            page_action = 'custom'), style = {'display' : 'none','width':'40%'})
+            page_action = 'custom',
+            export_format='csv'), style = {'display' : 'none','width':'40%'})]
         ),
         html.Div(id = 'intermediate_atc', style = {'display' : 'none'}),
         html.Div(id = 'intermediate', style = {'display' : 'none'})
@@ -180,7 +183,7 @@ def init_callback(app, atc_list) :
     #output : 함수 결과
 
     @app.callback(
-        [Output('datatable-paging', 'columns'), Output('intermediate', 'children'), Output('table', 'style')], 
+        [Output('datatable-paging', 'columns'), Output('intermediate', 'children'),Output('datatable-paging', 'page_count'), Output('table', 'style')], 
         [Input('submit_button', 'n_clicks')],
         [State('elements', 'value'), State('select2', 'value'),
         State('radio_main', 'value'), State('sub_input', 'value'),
@@ -207,4 +210,3 @@ def init_callback(app, atc_list) :
         return df.iloc[
             page_current*page_size : (page_current + 1) * page_size
         ].to_dict('records')
-
