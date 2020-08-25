@@ -39,6 +39,7 @@ def make_table(table, element, mode, num) :
     if table == None :
         df_freq = pd.DataFrame()
         df_asso = pd.DataFrame()
+        return [[],0,[],0]
     else :
         df_freq, df_asso = functions2.calculate(table, element, mode, num)
     return [[{"name" : i, "id" : i} for i in df_freq.columns if i!='total_set'], len(df_freq)//PAGE_SIZE + 1, [{"name" : i, "id" : i} for i in df_asso.columns if i!='total_set'], len(df_asso)//PAGE_SIZE + 1]
@@ -227,8 +228,7 @@ def init_callback(app, atc_list) :
         return result
 
     @app.callback(
-        [Output('datatable-paging-freq', 'columns'), Output('datatable-paging-freq', 'page_count'),Output('datatable-paging-asso', 'columns'), Output('datatable-paging-asso', 'page_count'),
-        Output('filter-freq-elements','disabled'),Output('filter-asso-elements','disabled'),Output('alert-msg','children')], 
+        [Output('datatable-paging-freq', 'columns'), Output('datatable-paging-freq', 'page_count'),Output('datatable-paging-asso', 'columns'), Output('datatable-paging-asso', 'page_count'), Output('alert-msg','children')], 
         [Input('submit_button', 'n_clicks')],
         [State('elements', 'value'), State('select2', 'value'),
         State('num', 'value')]
@@ -238,9 +238,9 @@ def init_callback(app, atc_list) :
         t0 = time.time()
         result = []
         if num != None : 
-            result = make_table('medicodeset', element, mode, num) + [True,True]
+            result = make_table('medicodeset', element, mode, num)
         else : 
-            result = make_table(None, element, mode, num) + [False,False]
+            result = make_table(None, element, mode, num)
         t1 = time.time()
         exec_time = t1 - t0
         alert_msg = f"Processing done. Total time: {exec_time}"
@@ -252,19 +252,19 @@ def init_callback(app, atc_list) :
         [Input('submit_button', 'n_clicks'), Input('datatable-paging-freq', "page_current"),
         Input('datatable-paging-freq', "page_size"),
         Input('datatable-paging-freq','sort_by'),
-        Input('datatable-paging-freq', 'filter_query'),
-        Input('filter-freq-elements', 'value')]
+        Input('datatable-paging-freq', 'filter_query'),]
     )
-    def update_paging(n_clicks, page_current, page_size,sort_by,filter,filter_elements) :
+    def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
         global df_freq
         filtering_expressions = filter.split(' && ')
-        if filter_elements!='all':
-            filtered_freq=[]
-            filtered_freq.append([df_freq[df_freq['total_set'].astype(str).str.contains(ele)].index for ele in filter_elements])
-            filtered_freq=[y for x in filtered_freq for y in x]
-            dff=df_freq[df_freq.index.isin(filtered_freq)]
-        else:
-            dff=df_freq
+        # if filter_elements!='all':
+        #     filtered_freq=[]
+        #     filtered_freq.append([df_freq[df_freq['total_set'].astype(str).str.contains(ele)].index for ele in filter_elements])
+        #     filtered_freq=[y for x in filtered_freq for y in x]
+        #     dff=df_freq[df_freq.index.isin(filtered_freq)]
+        # else:
+        #     dff=df_freq
+        dff=df_freq
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
             if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
@@ -293,20 +293,20 @@ def init_callback(app, atc_list) :
         [Input('submit_button', 'n_clicks'), Input('datatable-paging-asso', "page_current"),
         Input('datatable-paging-asso', "page_size"),
         Input('datatable-paging-asso','sort_by'),
-        Input('datatable-paging-asso', 'filter_query'),
-        Input('filter-asso-elements', 'value')]
+        Input('datatable-paging-asso', 'filter_query')
+        ]
     )
-    def update_paging(n_clicks, page_current, page_size,sort_by,filter,filter_elements) :
+    def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
         global df_asso
         filtering_expressions = filter.split(' && ')
-        if filter_elements!='all':
-            filtered_rules=[]
-            filtered_rules.append([df_asso[df_asso['total_set'].astype(str).str.contains(ele)].index for ele in filter_elements])
-            filtered_rules=[y for x in filtered_rules for y in x]
-            dff=df_asso[df_asso.index.isin(filtered_rules)]
-        else:
-            dff=df_asso
-        #dff=df_asso
+        # if filter_elements!='all':
+        #     filtered_rules=[]
+        #     filtered_rules.append([df_asso[df_asso['total_set'].astype(str).str.contains(ele)].index for ele in filter_elements])
+        #     filtered_rules=[y for x in filtered_rules for y in x]
+        #     dff=df_asso[df_asso.index.isin(filtered_rules)]
+        # else:
+        #     dff=df_asso
+        dff=df_asso
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
             if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
@@ -328,8 +328,23 @@ def init_callback(app, atc_list) :
         size=page_size
         return dff.iloc[
         page*size : (page + 1) * size, np.r_[:5]
-        ].to_dict('records')
+        ].to_dict('records'), 
 
+    @app.callback(
+        [Output('filter-freq-elements','disabled')],
+        [Input('datatable-paging-freq','data')]
+    )
+
+    def open_freq_filter_list(data):
+        return True
+
+    @app.callback(
+        [Output('filter-asso-elements','disabled')],
+        [Input('datatable-paging-asso','data')]
+    )
+
+    def open_asso_filter_list(data):
+        return True
 
     # @app.callback(
     #     [Output('datatable-paging-freq', 'data'),Output('datatable-paging-freq', 'page_size'),Output('datatable-paging-freq', 'current_page')],
