@@ -98,10 +98,10 @@ def calc_fpgrowth(df,element,min_support) :
       rules['support']=rules['support'].round(2)
       rules=rules.loc[:,['antecedents','consequents','support','count','confidence','total_set']]
       rules.columns=['연관약품코드(전)','연관약품코드(후)','지지도(%)','출현빈도','연관도(%)','total_set']
+      frequent_itemsets["total_set"]=frequent_itemsets["itemsets"] 
       frequent_itemsets["itemsets"] = frequent_itemsets["itemsets"].apply(lambda x : ', '.join(list(x)))
       frequent_itemsets['support']=frequent_itemsets['support']*100
       frequent_itemsets['support']=frequent_itemsets['support'].round(2)
-      frequent_itemsets["total_set"]=frequent_itemsets["itemsets"] 
       frequent_itemsets=frequent_itemsets.loc[:,['itemsets','support','count','length','total_set']]
       frequent_itemsets.columns=['출현집합','지지도(%)','출현빈도','품목개수','total_set']
       frequent_itemsets.reset_index(drop=True)
