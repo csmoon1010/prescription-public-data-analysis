@@ -39,7 +39,6 @@ def make_table(table, element, mode, num) :
     if table == None :
         df_freq = pd.DataFrame()
         df_asso = pd.DataFrame()
-        return [[],0,[],0]
     else :
         df_freq, df_asso = functions2.calculate(table, element, mode, num)
     return [[{"name" : i, "id" : i} for i in df_freq.columns if i!='total_set'], len(df_freq)//PAGE_SIZE + 1, [{"name" : i, "id" : i} for i in df_asso.columns if i!='total_set'], len(df_asso)//PAGE_SIZE + 1]
@@ -70,7 +69,7 @@ def create_dashboard2(server) :
                         dbc.Label('품목선택'),
                         dcc.Dropdown(id = 'elements',
                             options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
-                            placeholder = '원하는 성분 선택', disabled = True, multi = True, value = None,
+                            placeholder = '원하는 성분 선택', disabled = False, multi = True, value = None,
                             optionHeight=80,
                         ),
                         dbc.Label('지지도 설정'),
@@ -97,7 +96,7 @@ def create_dashboard2(server) :
                             dbc.Label('병용처방항목 필터링'),
                             dcc.Dropdown(id = 'filter-freq-elements',
                                 options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
-                                placeholder = '필터링할 성분 선택', disabled = True, multi = True, value = 'all'
+                                placeholder = '필터링할 성분 선택', disabled = False, multi = True, value = 'all'
                             )
                             ])
                         ],style={'margin-bottom':'10px'}),
@@ -126,7 +125,7 @@ def create_dashboard2(server) :
                             dbc.Label('병용처방항목 필터링'),
                             dcc.Dropdown(id = 'filter-asso-elements',
                                 options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
-                                placeholder = '필터링할 성분 선택', disabled = True, multi = True, value = 'all'
+                                placeholder = '필터링할 성분 선택', disabled = False, multi = True, value = None
                             )
                             ])
                         ],style={'margin-bottom':'10px'}),
@@ -150,7 +149,9 @@ def create_dashboard2(server) :
                         ])
                     ],md=5)
                 ]
-            )
+            ),
+            html.Div(id = 'intermediate_freq', style = {'display' : 'none'}),
+            html.Div(id = 'intermediate_asso', style = {'display' : 'none'})
         ],
         style={"margin":"auto"}
     )
@@ -248,22 +249,14 @@ def init_callback(app, atc_list) :
         return result + [alert]
 
     @app.callback(
-        [Output('datatable-paging-freq', 'data')],
+        Output('datatable-paging-freq', 'data'),
         [Input('submit_button', 'n_clicks'), Input('datatable-paging-freq', "page_current"),
         Input('datatable-paging-freq', "page_size"),
         Input('datatable-paging-freq','sort_by'),
-        Input('datatable-paging-freq', 'filter_query'),]
+        Input('datatable-paging-freq', 'filter_query')]
     )
     def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
-        global df_freq
         filtering_expressions = filter.split(' && ')
-        # if filter_elements!='all':
-        #     filtered_freq=[]
-        #     filtered_freq.append([df_freq[df_freq['total_set'].astype(str).str.contains(ele)].index for ele in filter_elements])
-        #     filtered_freq=[y for x in filtered_freq for y in x]
-        #     dff=df_freq[df_freq.index.isin(filtered_freq)]
-        # else:
-        #     dff=df_freq
         dff=df_freq
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
@@ -285,27 +278,17 @@ def init_callback(app, atc_list) :
         page=page_current
         size=page_size
         return dff.iloc[
-        page*size : (page + 1) * size, np.r_[:4]
-        ].to_dict('records') ,
+        page*size : (page + 1) * size, np.r_[:4]].to_dict('records')
 
     @app.callback(
-        [Output('datatable-paging-asso', 'data')],
+        Output('datatable-paging-asso', 'data'),
         [Input('submit_button', 'n_clicks'), Input('datatable-paging-asso', "page_current"),
         Input('datatable-paging-asso', "page_size"),
         Input('datatable-paging-asso','sort_by'),
-        Input('datatable-paging-asso', 'filter_query')
-        ]
+        Input('datatable-paging-asso', 'filter_query')]
     )
     def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
-        global df_asso
         filtering_expressions = filter.split(' && ')
-        # if filter_elements!='all':
-        #     filtered_rules=[]
-        #     filtered_rules.append([df_asso[df_asso['total_set'].astype(str).str.contains(ele)].index for ele in filter_elements])
-        #     filtered_rules=[y for x in filtered_rules for y in x]
-        #     dff=df_asso[df_asso.index.isin(filtered_rules)]
-        # else:
-        #     dff=df_asso
         dff=df_asso
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
@@ -327,48 +310,19 @@ def init_callback(app, atc_list) :
         page=page_current
         size=page_size
         return dff.iloc[
-        page*size : (page + 1) * size, np.r_[:5]
-        ].to_dict('records'), 
+        page*size : (page + 1) * size, np.r_[:5]].to_dict('records')
 
     @app.callback(
-        [Output('filter-freq-elements','disabled')],
-        [Input('datatable-paging-freq','data')]
+        [Output('datatable-paging-freq', 'data'), Output('datatable-paging-freq', "page_current"), Output('datatable-paging-freq', "page_size")],
+        Input('filter-freq-elements', 'value')
     )
 
-    def open_freq_filter_list(data):
-        return True
-
-    @app.callback(
-        [Output('filter-asso-elements','disabled')],
-        [Input('datatable-paging-asso','data')]
-    )
-
-    def open_asso_filter_list(data):
-        return True
-
-    # @app.callback(
-    #     [Output('datatable-paging-freq', 'data'),Output('datatable-paging-freq', 'page_size'),Output('datatable-paging-freq', 'current_page')],
-    #     [Input('filter-freq-elements', 'value')],
-    # )
-    
-    # def update_filter_freq_elements(value):
-    #     filtered_freq=[]
-    #     filtered_freq.append([df_freq[df_freq['total_set'].astype(str).str.contains(ele)].index for ele in value])
-    #     filtered_freq=[y for x in filtered_freq for y in x]
-    #     dff=df_freq[df_freq.index.isin(filtered_freq)]
-    #     return dff.iloc[
-    #     0 : 1 * PAGE_SIZE, np.r_[:5]
-    #     ].to_dict('records') , len(dff)//PAGE_SIZE + 1, 0
-
-    # @app.callback(
-    #     [Output('datatable-paging-asso', 'data'),Output('datatable-paging-asso', 'page_size'),Output('datatable-paging-asso', 'current_page')],
-    #     [Input('filter-asso-elements', 'value')],
-    # )
-    # def update_filter_asso_elements(value):
-    #     filtered_asso=[]
-    #     filtered_asso.append([df_asso[df_asso['total_set'].astype(str).str.contains(ele)].index for ele in value])
-    #     filtered_asso=[y for x in filtered_asso for y in x]
-    #     dff=df_asso[df_asso.index.isin(filtered_asso)]
-    #     return dff.iloc[
-    #     0 : 1 * PAGE_SIZE, np.r_[:5]
-    #     ].to_dict('records') , len(dff)//PAGE_SIZE + 1, 0
+    def filter_freq_table(value):
+        if value=='all':
+            dff=df_freq
+        filtered_rules=[]
+        filtered_rules.append([df_freq[df_freq['total_set'].astype(str).str.contains(ele)].index for ele in value])
+        filtered_rules=[y for x in filtered_rules for y in x]
+        dff=df_freq[df_freq.index.isin(filtered_rules)]
+        return [dff.iloc[
+        0*PAGE_SIZE : (0 + 1) * PAGE_SIZE, np.r_[:4]].to_dict('records'),1,len(dff)//PAGE_SIZE + 1]
