@@ -68,6 +68,12 @@ body{
     width: 100%;
     margin-bottom:10px;
 }
+#datatable-statistics{
+    margin-bottom : 20px;
+}
+#data_len{
+    float:right;
+}
 
 #graph{
     margin-bottom: 40px;

@@ -5,7 +5,7 @@ import dash_table as dt
 from dash.dependencies import Input, Output, State
 from pymongo import MongoClient
 import pandas as pd
-from functions import Visit_count, Calculate, Date_Number, Medication, display_1
+from functions import Visit_count, Calculate, Date_Number, Medication, Statistics
 from connect_mongo import make_client
 import time
 import numpy as np
@@ -20,6 +20,7 @@ import math
 #pd.options.mode.chained_assignment=None
 PAGE_SIZE = 10
 result_df = pd.DataFrame()
+s_df = pd.DataFrame()
 
 def get_atc() :
     atc_df=pd.read_csv('code_list.csv',encoding='utf-8')
@@ -106,7 +107,16 @@ def make_table(value) :
     #result_json = df.to_json(orient='split')
     total_page = math.ceil(len(result_df)/PAGE_SIZE)
     return [[{"name" : i, "id" : i} for i in result_df.columns], total_page]
-    
+
+def calc_statistics(value) :
+    global result_df
+    global s_df
+    if value != None :
+        s_df = Statistics(result_df)
+    else :
+        s_df = pd.DataFrame()
+    return [s_df.to_dict('records'), [{"name" : i, "id" : i} for i in s_df.columns]]
+
 def make_graph(value) :
     if value != None :
         print("graph")
@@ -147,7 +157,15 @@ def create_dashboard1(server) :
             children=html.Div(className='wrapper', children = [
             html.Div(className='item',
                 children = [html.Div(id = 'table', children=[
-                    html.Div(id='download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'csv_link', href="/dashboard1/download_csv")]),
+                    html.Div(id='download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'csv_link', href="/dashboard1/download_csv"),
+                    html.Span(id='data_len', children = ['데이터 개수 : {}'.format(len(result_df))])]),
+                    dt.DataTable(id = 'datatable-statistics',
+                    columns=[
+                        {'name': i, 'id': i, 'deletable': True} for i in sorted(s_df.columns)
+                    ],
+                    style_as_list_view=True,
+                    style_cell={'padding' : '5px'},
+                    style_header={'backgroundColor' : 'white', 'fontWeight' : 'bold'}),
                     dt.DataTable(id = 'datatable-paging',
                     columns=[
                         {'name': i, 'id': i, 'deletable': True} for i in sorted(result_df.columns)
@@ -211,7 +229,7 @@ def init_callback(app) :
     def update_table(n_clicks, value):
         print("update_Table")
         if value == None :
-            return make_table(value) + [{'display' : 'none'}, {'display' : 'none'}]
+            return make_table(value) + [{'display' : 'block'}, {'display' : 'none'}]
         else :
             return make_table(value) + [{'display' : 'block'}, {'display' : 'block'}]
 
@@ -248,6 +266,14 @@ def init_callback(app) :
         return dff.iloc[
         page*size : (page + 1) * size
         ].to_dict('records')
+
+    @app.callback(
+        [Output('datatable-statistics', 'data'),Output('datatable-statistics', 'columns')],
+        [Input('submit_button', 'n_clicks'), Input('datatable-paging', 'page_count')],
+        [State('code_input', 'value')]
+    )
+    def update_statistics(n_clicks, columns, value) :
+        return calc_statistics(value)
 
     @app.callback(
         Output('graph', 'children'),
