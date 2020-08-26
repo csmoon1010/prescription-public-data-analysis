@@ -16,6 +16,7 @@ import flask
 #import io
 from io import StringIO
 import requests
+import math
 #pd.options.mode.chained_assignment=None
 PAGE_SIZE = 10
 result_df = pd.DataFrame()
@@ -103,8 +104,8 @@ def make_table(value) :
     else : 
         result_df = pd.DataFrame()
     #result_json = df.to_json(orient='split')
-    #return [[{"name" : i, "id" : i} for i in df.columns], result_json, len(df)//PAGE_SIZE + 1]
-    return [[{"name" : i, "id" : i} for i in result_df.columns], len(result_df)//PAGE_SIZE + 1]
+    total_page = math.ceil(len(result_df)/PAGE_SIZE)
+    return [[{"name" : i, "id" : i} for i in result_df.columns], total_page]
     
 def make_graph(value) :
     if value != None :
@@ -124,22 +125,21 @@ def create_dashboard1(server) :
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     app = dash.Dash(__name__, server = server, url_base_pathname = '/dashboard1/', external_stylesheets=external_stylesheets)
     atc_list = get_atc()
-    app.layout = html.Div(id = 'total-container', children = [
-        html.Div(id = 'header',
+    app.layout = html.Div(className = 'total-container', children = [
+        html.Div(className = 'header',
             children = [
-                html.H4(id = 'title', children = '복약순응도')
+                html.H3(className = 'title', children = '복약순응도')
             ]
         ),
         html.Div(id = 'input-container', children = [
                 html.Div(id = 'input-title', className='search', children= '약품일반성분명코드'),
-                html.Div(dcc.Dropdown(id = 'code_input',
+                html.Div(id = 'input-dropdown', className='search', children= [dcc.Dropdown(id = 'code_input',
                      options=[
                          {'label' : str(a) + ' : ' + str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
                          placeholder = '원하는 성분 선택',multi = True,
-                        value = None,
-                        style = {'width' : '80%'}
-                        )
-                        ),
+                        value = None
+                    )]
+                ),
                 html.Button(id = 'submit_button', className='search', children='검색', n_clicks = 0)]),
         dcc.Loading(
             id="loading-table",
@@ -220,9 +220,10 @@ def init_callback(app) :
         [Input('submit_button', 'n_clicks'), Input('datatable-paging', "page_current"),
         Input('datatable-paging', "page_size"),
         Input('datatable-paging','sort_by'),
-        Input('datatable-paging', 'filter_query')]
+        Input('datatable-paging', 'filter_query'),
+        Input('datatable-paging', 'page_count')]
     )
-    def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
+    def update_paging(n_clicks, page_current, page_size,sort_by,filter, page_count) :
         filtering_expressions = filter.split(' && ')
         dff=result_df
         for filter_part in filtering_expressions:
@@ -250,10 +251,10 @@ def init_callback(app) :
 
     @app.callback(
         Output('graph', 'children'),
-        [Input('submit_button', 'n_clicks')],
+        [Input('submit_button', 'n_clicks'), Input('datatable-paging', 'page_count')],
         [State('code_input', 'value')]
     )
-    def update_graph(n_clicks, value) :
+    def update_graph(n_clicks, page_count, value) :
         print('graph {} {}'.format(n_clicks, value))
         return make_graph(value)
 

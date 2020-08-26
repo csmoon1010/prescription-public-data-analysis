@@ -16,6 +16,7 @@ import time
 import flask
 from io import StringIO
 import requests
+import math
 
 PAGE_SIZE = 10
 df_freq=pd.DataFrame()
@@ -44,7 +45,7 @@ def make_table(table, element, mode, num) :
         df_asso = pd.DataFrame()
     else :
         df_freq, df_asso = functions2.calculate(table, element, mode, num)
-    return [[{"name" : i, "id" : i} for i in df_freq.columns if i!='total_set'], len(df_freq)//PAGE_SIZE + 1, [{"name" : i, "id" : i} for i in df_asso.columns if i!='total_set'], len(df_asso)//PAGE_SIZE + 1]
+    return [[{"name" : i, "id" : i} for i in df_freq.columns if i!='total_set'], [{"name" : i, "id" : i} for i in df_asso.columns if i!='total_set']]
       
 
 def create_dashboard2(server) :
@@ -52,11 +53,13 @@ def create_dashboard2(server) :
     app = dash.Dash(__name__, server = server, url_base_pathname = '/dashboard2/', external_stylesheets=external_stylesheets)
     selected = []
     atc_list = get_atc()
-    app.layout = dbc.Container(
+    app.layout = html.Div(className = 'total-container', children= [dbc.Container(
             fluid=True,
             children=[
-                html.H1("공공데이터 기반 연관 약품 분석 (빈도/관련도)"),
-                html.Hr(),
+                html.Div(className = 'header',
+                    children = [
+                    html.H3(className = 'title', children = "연관 약품 분석 (빈도/관련도)")]
+                ),
                 dbc.Row(
                     [
                         dbc.Col([dbc.Card([
@@ -99,7 +102,7 @@ def create_dashboard2(server) :
                                 dbc.Label('병용처방항목 필터링'),
                                 dcc.Dropdown(id = 'filter-freq-elements',
                                     options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
-                                    placeholder = '필터링할 성분 선택', disabled = False, multi = True, value = 'all'
+                                    placeholder = '필터링할 성분 선택', disabled = False, multi = True
                                 )
                                 ])
                             ],style={'margin-bottom':'10px'}),
@@ -128,7 +131,7 @@ def create_dashboard2(server) :
                                 dbc.Label('병용처방항목 필터링'),
                                 dcc.Dropdown(id = 'filter-asso-elements',
                                     options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
-                                    placeholder = '필터링할 성분 선택', disabled = False, multi = True, value = None
+                                    placeholder = '필터링할 성분 선택', disabled = False, multi = True
                                 )
                                 ])
                             ],style={'margin-bottom':'10px'}),
@@ -157,7 +160,7 @@ def create_dashboard2(server) :
                 html.Div(id = 'intermediate_asso', style = {'display' : 'none'})
             ],
             style={"margin":"auto"}
-        )
+        )])
     init_callback(app, atc_list)
     return app
     
@@ -231,7 +234,7 @@ def init_callback(app, atc_list) :
         return result
 
     @app.callback(
-        [Output('datatable-paging-freq', 'columns'), Output('datatable-paging-freq', 'page_count'),Output('datatable-paging-asso', 'columns'), Output('datatable-paging-asso', 'page_count'), Output('alert-msg','children')], 
+        [Output('datatable-paging-freq', 'columns'),Output('datatable-paging-asso', 'columns'), Output('alert-msg','children')], 
         [Input('submit_button', 'n_clicks')],
         [State('elements', 'value'), State('select2', 'value'),
         State('num', 'value')]
@@ -251,15 +254,22 @@ def init_callback(app, atc_list) :
         return result + [alert]
 
     @app.callback(
-        Output('datatable-paging-freq', 'data'),
+        [Output('datatable-paging-freq', 'data'), Output('datatable-paging-freq', 'page_count')],
         [Input('submit_button', 'n_clicks'), Input('datatable-paging-freq', "page_current"),
         Input('datatable-paging-freq', "page_size"),
         Input('datatable-paging-freq','sort_by'),
-        Input('datatable-paging-freq', 'filter_query')]
+        Input('datatable-paging-freq', 'filter_query'),
+        Input('filter-freq-elements', 'value')]
     )
-    def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
+    def update_paging(n_clicks, page_current, page_size,sort_by,filter, value) :
         filtering_expressions = filter.split(' && ')
-        dff=df_freq
+        if value == None or value == []: 
+            dff=df_freq
+        else :
+            filtered_rules=[]
+            filtered_rules.append([df_freq[df_freq['total_set'].astype(str).str.contains(ele)].index for ele in value])
+            filtered_rules=[y for x in filtered_rules for y in x]
+            dff=df_freq[df_freq.index.isin(filtered_rules[0])]
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
             if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
@@ -279,19 +289,27 @@ def init_callback(app, atc_list) :
         )
         page=page_current
         size=page_size
-        return dff.iloc[
-        page*size : (page + 1) * size, np.r_[:4]].to_dict('records')
+        total_page = math.ceil(len(dff)/PAGE_SIZE)
+        return [dff.iloc[
+        page*size : (page + 1) * size, np.r_[:4]].to_dict('records'), total_page]
 
     @app.callback(
-        Output('datatable-paging-asso', 'data'),
+        [Output('datatable-paging-asso', 'data'),Output('datatable-paging-asso', 'page_count')],
         [Input('submit_button', 'n_clicks'), Input('datatable-paging-asso', "page_current"),
         Input('datatable-paging-asso', "page_size"),
         Input('datatable-paging-asso','sort_by'),
-        Input('datatable-paging-asso', 'filter_query')]
+        Input('datatable-paging-asso', 'filter_query'),
+        Input('filter-asso-elements', 'value')]
     )
-    def update_paging(n_clicks, page_current, page_size,sort_by,filter) :
+    def update_paging(n_clicks, page_current, page_size,sort_by,filter, value) :
         filtering_expressions = filter.split(' && ')
-        dff=df_asso
+        if value == None or value == []: 
+            dff=df_asso
+        else :
+            filtered_rules=[]
+            filtered_rules.append([df_asso[df_asso['total_set'].astype(str).str.contains(ele)].index for ele in value])
+            filtered_rules=[y for x in filtered_rules for y in x]
+            dff=df_asso[df_asso.index.isin(filtered_rules[0])]
         for filter_part in filtering_expressions:
             col_name, operator, filter_value = split_filter_part(filter_part)
             if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
@@ -311,8 +329,9 @@ def init_callback(app, atc_list) :
         )
         page=page_current
         size=page_size
-        return dff.iloc[
-        page*size : (page + 1) * size, np.r_[:5]].to_dict('records')
+        total_page = math.ceil(len(dff)/PAGE_SIZE)
+        return [dff.iloc[
+        page*size : (page + 1) * size, np.r_[:5]].to_dict('records'), total_page]
 
     @app.server.route('/dashboard2/download_asso_csv')
     def download_asso_csv() :
@@ -359,17 +378,3 @@ def init_callback(app, atc_list) :
         )
         response.headers["Content-Disposition"] = "attachment; filename=post_freq_export.csv"
         return response
-    # @app.callback(
-    #     [Output('datatable-paging-freq', 'data'), Output('datatable-paging-freq', "page_current"), Output('datatable-paging-freq', "page_size")],
-    #     [Input('filter-freq-elements', 'value')]
-    # )
-
-    # def filter_freq_table(value):
-    #     if value=='all':
-    #         dff=df_freq
-    #     filtered_rules=[]
-    #     filtered_rules.append([df_freq[df_freq['total_set'].astype(str).str.contains(ele)].index for ele in value])
-    #     filtered_rules=[y for x in filtered_rules for y in x]
-    #     dff=df_freq[df_freq.index.isin(filtered_rules)]
-    #     return [dff.iloc[
-    #     0*PAGE_SIZE : (0 + 1) * PAGE_SIZE, np.r_[:4]].to_dict('records'),1,len(dff)//PAGE_SIZE + 1]
