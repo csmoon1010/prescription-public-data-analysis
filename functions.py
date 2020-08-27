@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import warnings
 import time
-#import itertools as it
+import itertools as it
 
 #방문횟수 카운트
 def Visit_count(df):
@@ -44,27 +44,27 @@ def Calculate(df):
 #     print(time.time()-start)
 #     return final
 
-# def Date_Number(df):
-#     a = list(df.groupby('가입자일련번호').count()['방문횟수'])
-#     b = list(it.accumulate(a))
-#     b = [x-1 for x in b]
-#     temp = df[~df.index.isin(b[:-1])]
-#     temp = temp.reset_index().drop(['index'], axis = 1)
-#     change = temp['처방일간격'].astype(str).str.slice(0 , -24).astype(int)
-#     data = temp.drop(['처방일간격'], axis = 1)
-#     final = pd.concat([data, change], axis = 1)
-#     return final
-
 def Date_Number(df):
-    change = df['처방일간격'].astype(str).str.slice(0 , -24).astype(int)
-    data = df.drop(['처방일간격'], axis = 1)
+    a = list(df.groupby('가입자일련번호').count()['방문횟수'])
+    b = list(it.accumulate(a))
+    b = [x-1 for x in b]
+    temp = df[~df.index.isin(b[:-1])]
+    temp = temp.reset_index().drop(['index'], axis = 1)
+    change = temp['처방일간격']/np.timedelta64(1, 'D')
+    data = temp.drop(['처방일간격'], axis = 1)
     final = pd.concat([data, change], axis = 1)
-    #마이너스 제거
-    final_del = final[final['처방일간격'] < 0].index
-    final = final.drop(final_del)
-    final = final.reset_index()
-    final = final.drop(['index'], axis = 1)
     return final
+
+# def Date_Number(df):
+#     change = df['처방일간격'].astype(str).str.slice(0 , -24).astype(int)
+#     data = df.drop(['처방일간격'], axis = 1)
+#     final = pd.concat([data, change], axis = 1)
+#     #마이너스 제거
+#     final_del = final[final['처방일간격'] < 0].index
+#     final = final.drop(final_del)
+#     final = final.reset_index()
+#     final = final.drop(['index'], axis = 1)
+#     return final
 
 #복약순응도 추정
 def Medication(df): 

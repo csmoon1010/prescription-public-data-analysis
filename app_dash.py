@@ -106,7 +106,8 @@ def make_table(value) :
         result_df = pd.DataFrame()
     #result_json = df.to_json(orient='split')
     total_page = math.ceil(len(result_df)/PAGE_SIZE)
-    return [[{"name" : i, "id" : i} for i in result_df.columns], total_page]
+    data_size = len(result_df)
+    return [[{"name" : i, "id" : i} for i in result_df.columns], total_page, ['데이터 개수 : {}'.format(data_size)]]
 
 def calc_statistics(value) :
     global result_df
@@ -158,7 +159,7 @@ def create_dashboard1(server) :
             html.Div(className='item',
                 children = [html.Div(id = 'table', children=[
                     html.Div(id='download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'csv_link', href="/dashboard1/download_csv"),
-                    html.Span(id='data_len', children = ['데이터 개수 : {}'.format(len(result_df))])]),
+                   html.Span(id='data_len', className = 'size_explain')]),
                     dt.DataTable(id = 'datatable-statistics',
                     columns=[
                         {'name': i, 'id': i, 'deletable': True} for i in sorted(s_df.columns)
@@ -221,7 +222,7 @@ def split_filter_part(filter_part):
 
 def init_callback(app) : 
     @app.callback(
-        [Output('datatable-paging', 'columns'),Output('datatable-paging', 'page_count'),
+        [Output('datatable-paging', 'columns'),Output('datatable-paging', 'page_count'), Output('data_len', 'children'),
         Output('table', 'style'), Output('graph', 'style')],
         [Input('submit_button', 'n_clicks')],
         [State('code_input', 'value')]
