@@ -90,6 +90,9 @@ def calc_fpgrowth(df,element,min_support) :
       rules.sort_values(by=['confidence','antecedent support'],ascending=False,inplace=True) # 지지도 : (동시 포함 수) / (전체 수)
       rules["consequents"] = rules["consequents"].apply(lambda x : ', '.join(list(x)))
       rules["antecedents"] = rules["antecedents"].apply(lambda x: ', '.join(list(x)))
+      #atc_df=pd.read_csv('code_list.csv',encoding='utf-8')
+      #rules["consequents"] = rules["consequents"].apply(lambda x : ', '.join(list(map(lambda i : [atc_df['주성분코드'] == i].iloc[0]['Spec'], x))))
+      #rules["antecedents"] = rules["antecedents"].apply(lambda x : ', '.join(list(map(lambda i : [atc_df['주성분코드'] == i].iloc[0]['Spec'], x))))
       rules['count']=len(df)*rules['support']
       rules['support']=100*rules['support']
       rules['confidence']=100*rules['confidence']
@@ -100,6 +103,7 @@ def calc_fpgrowth(df,element,min_support) :
       rules.columns=['연관약품코드(전)','연관약품코드(후)','지지도(%)','출현빈도','연관도(%)','total_set']
       frequent_itemsets["total_set"]=frequent_itemsets["itemsets"] 
       frequent_itemsets["itemsets"] = frequent_itemsets["itemsets"].apply(lambda x : ', '.join(list(x)))
+      ##rules["itemsets"] = rules["itemsets"].apply(lambda x : ', '.join(list(map(lambda i : [atc_df['주성분코드'] == i].iloc[0]['Spec'], x))))
       frequent_itemsets['support']=frequent_itemsets['support']*100
       frequent_itemsets['support']=frequent_itemsets['support'].round(2)
       frequent_itemsets=frequent_itemsets.loc[:,['itemsets','support','count','length','total_set']]

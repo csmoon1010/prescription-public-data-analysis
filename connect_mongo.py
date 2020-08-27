@@ -1,9 +1,9 @@
 import pymongo
 
 def connect_mongo() :
-      client = pymongo.MongoClient('18.222.188.131',
-      username='dw_marketing',
-      password='tgeo219',
+      client = pymongo.MongoClient('18.191.134.162',
+      username='dw',
+      password='dw123',
       authSource='daewoong',
       authMechanism='SCRAM-SHA-1')
       db = client["daewoong"]

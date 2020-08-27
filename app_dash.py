@@ -229,7 +229,7 @@ def init_callback(app) :
     def update_table(n_clicks, value):
         print("update_Table")
         if value == None :
-            return make_table(value) + [{'display' : 'block'}, {'display' : 'none'}]
+            return make_table(value) + [{'display' : 'none'}, {'display' : 'none'}]
         else :
             return make_table(value) + [{'display' : 'block'}, {'display' : 'block'}]
 

@@ -22,7 +22,6 @@ PAGE_SIZE = 10
 df_freq=pd.DataFrame()
 df_asso=pd.DataFrame()
 
-
 def get_atc() :
     atc_df=pd.read_csv('code_list.csv',encoding='utf-8')
     #atc = make_client('atc')
@@ -43,10 +42,12 @@ def make_table(table, element, mode, num) :
     if table == None :
         df_freq = pd.DataFrame()
         df_asso = pd.DataFrame()
+        #data_size = 0
     else :
         df_freq, df_asso = functions2.calculate(table, element, mode, num)
+        #data_size = df_freq.iloc[0, 3]
     return [[{"name" : i, "id" : i} for i in df_freq.columns if i!='total_set'], [{"name" : i, "id" : i} for i in df_asso.columns if i!='total_set']]
-      
+    # return return [[{"name" : i, "id" : i} for i in df_freq.columns if i!='total_set'], [{"name" : i, "id" : i} for i in df_asso.columns if i!='total_set'], data_size]  
 
 def create_dashboard2(server) :
     external_stylesheets = [dbc.themes.BOOTSTRAP]
@@ -108,7 +109,8 @@ def create_dashboard2(server) :
                             ],style={'margin-bottom':'10px'}),
                             dbc.Card([
                                 dbc.CardBody([
-                            html.Div(id='freq-download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'freq_csv_link', href="/dashboard2/download_freq_csv")]),
+                            html.Div(id='freq-download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'freq_csv_link', href="/dashboard2/download_freq_csv"),
+                            html.Span(children = '데이터 개수 : '), html.Span(id='data_len') ]),
                             dt.DataTable(id = 'datatable-paging-freq',
                                 columns=[
                                         {'name': i, 'id': i, 'deletable': True} for i in sorted(df_freq.columns) if i!='total_set'
@@ -235,11 +237,12 @@ def init_callback(app, atc_list) :
 
     @app.callback(
         [Output('datatable-paging-freq', 'columns'),Output('datatable-paging-asso', 'columns'), Output('alert-msg','children')], 
+        #[Output('datatable-paging-freq', 'columns'),Output('datatable-paging-asso', 'columns'),Output('data_len', 'children'), Output('alert-msg','children')],
         [Input('submit_button', 'n_clicks')],
         [State('elements', 'value'), State('select2', 'value'),
         State('num', 'value')]
     )
-    def update_table(n_clicks, element, mode, num) :
+    def update_table(n_clicks, element, mode, num) :    
         print('update')
         t0 = time.time()
         result = []
