@@ -1,3 +1,0 @@
-server:
-  host: localhost:27017
-  db : dwDB

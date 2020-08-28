@@ -31,19 +31,6 @@ def Calculate(df):
     final = final.drop(['index'], axis = 1)
     return final
 
-#날짜 type을 int로 변경(days 삭제)
-# def Date_Number(df):
-#     change = df['처방일간격'].astype(str).str.slice(0 , -24).astype(int)
-#     data = df.drop(['처방일간격'], axis = 1)
-#     final = pd.concat([data, change], axis = 1)
-#     #마지막날 제거(단, 가장 마지막 성분은 이미 앞에서 제거됨)
-#     last = final[-1:]
-#     start = time.time()
-#     final = final.groupby(["가입자일련번호"]).apply(lambda x : x.sort_values(["요양개시일자"], ascending=True)[:-1]).reset_index(drop=True)
-#     final = pd.concat([final, last], axis = 0).reset_index(drop=True)
-#     print(time.time()-start)
-#     return final
-
 def Date_Number(df):
     a = list(df.groupby('가입자일련번호').count()['방문횟수'])
     b = list(it.accumulate(a))
@@ -81,7 +68,6 @@ def Statistics(df) :
     data = [["평균", round(df['1일투약량'].mean(), 2), round(df['총투여일수'].mean(), 2), round(df['처방일간격'].mean(), 2), round(df['복약순응도'].mean(), 2)],
     ["최빈값", df['1일투약량'].mode(), df['총투여일수'].mode(),df['처방일간격'].mode(), round(df['복약순응도'].mode(), 2)]]
     final = pd.DataFrame(data, columns = ["구분", "1일투약량", "총투여일수", "처방일간격", "복약순응도"])
-    print(final)
     return final
 
 #복약순응도 결과정리(처방건수기준)

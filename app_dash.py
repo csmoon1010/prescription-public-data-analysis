@@ -9,11 +9,9 @@ from functions import Visit_count, Calculate, Date_Number, Medication, Statistic
 from connect_mongo import make_client
 import time
 import numpy as np
-#import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import plotly.express as px
 import flask
-#import io
 from io import StringIO
 import requests
 import math
@@ -121,11 +119,6 @@ def calc_statistics(value) :
 def make_graph(value) :
     if value != None :
         print("graph")
-        # fig = display_1(df2)
-        # hist_data = [df['복약순응도'].astype('int64')]
-        # group_labels = ['복약순응도']
-        # fig = ff.create_distplot(hist_data, group_labels)
-        #fig = go.Figure(data=[go.Histogram(x=x)])
         x = result_df['복약순응도']
         fig = px.histogram(result_df, x=x, histnorm = "probability density")
         return dcc.Graph(figure = fig)
