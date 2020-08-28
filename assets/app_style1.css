@@ -1,11 +1,35 @@
+/*공통*/
 @font-face{
     font-family: "Nanum Font";
     src : url("./NanumSquareR.otf");
 }
 body{
     background-color: #F2F2F2;
+    margin-bottom : 50px;
+}
+.header {
+    align-items: center;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom : 1px solid gray;
+}
+.title {
+    text-align: center;
+    font-weight: bold;
+}
+.size_explain{
+    float:right;
+}
+.total-container{
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 100px;
+    margin-right: 100px;
+    font-family: "Nanum Font";
 }
 
+/*dash1 - 복약순응도*/
 .wrapper{
     display:grid;
     grid-template-columns: 1fr;
@@ -24,28 +48,6 @@ body{
     vertical-align: middle;
 }
 
-.total-container{
-    padding-left: 10px;
-    padding-right: 10px;
-    margin-left: 100px;
-    margin-right: 100px;
-    font-family: "Nanum Font";
-}
-.header {
-    align-items: center;
-    margin-top: 30px;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom : 1px solid gray;
-}
-.title {
-    text-align: center;
-    font-weight: bold;
-}
-.size_explain{
-    float:right;
-}
-
 #input-container{
     margin-bottom: 20px;
 }
@@ -60,8 +62,6 @@ body{
 #code-input{
     width: 100%;
 }
-
-
 #submit_button{
     font-size: 13px;
     background-color: white;
@@ -79,7 +79,13 @@ body{
     margin-bottom: 40px;
 }
 
+
 input[type="text"]{
     padding: 0px 0px 0px 0px;
     min-width: 30px;
+}
+
+/* dash2 - 병용처방 */
+.select{
+    margin-bottom : 30px;
 }

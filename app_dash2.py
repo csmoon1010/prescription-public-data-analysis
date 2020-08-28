@@ -21,8 +21,10 @@ import math
 PAGE_SIZE = 10
 df_freq=pd.DataFrame()
 df_asso=pd.DataFrame()
+atc_df = pd.DataFrame()
 
 def get_atc() :
+    global atc_df
     atc_df=pd.read_csv('code_list.csv',encoding='utf-8')
     #atc = make_client('atc')
     #atc_df = pd.DataFrame.from_dict(atc.find())
@@ -66,16 +68,16 @@ def create_dashboard2(server) :
                     [
                         dbc.Col([dbc.Card([
                             dbc.Label('단일/복합처방 선택'),
-                            dcc.Dropdown(id = 'select1',
+                            dcc.Dropdown(id = 'select1', className = 'select',
                                 options=[
                                     {'label' : '단일', 'value' : 'single'},
                                     {'label' : '복수', 'value' : 'multi'}],
                                 placeholder='성분 개수', searchable=False
                             ),
                             dbc.Label('AND/OR 조건선택'),
-                            dcc.Dropdown(id = 'select2', searchable=False),
+                            dcc.Dropdown(id = 'select2', className = 'select', searchable=False),
                             dbc.Label('품목선택'),
-                            dcc.Dropdown(id = 'elements',
+                            dcc.Dropdown(id = 'elements', className = 'select',
                                 options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
                                 placeholder = '원하는 성분 선택', disabled = False, multi = True, value = None,
                                 optionHeight=80,
@@ -97,67 +99,70 @@ def create_dashboard2(server) :
                             html.Br(),
                             dbc.Spinner(html.Div(id="alert-msg"))
                             ], body=True),
-                        ],md=3),
+                        ], md = 3),
                         dbc.Col([
-                            dbc.Card([
-                                dbc.CardBody([
-                                dbc.Label('병용처방항목 필터링'),
-                                dcc.Dropdown(id = 'filter-freq-elements',
-                                    options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
-                                    placeholder = '필터링할 성분 선택', disabled = False, multi = True
-                                )
-                                ])
-                            ],style={'margin-bottom':'10px'}),
-                            dbc.Card([
-                                dbc.CardBody([
-                            html.Div(id='freq-download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'freq_csv_link', href="/dashboard2/download_freq_csv"),
-                            html.Span(id = 'freq_len', className = 'size_explain') ]),
-                            dt.DataTable(id = 'datatable-paging-freq',
-                                columns=[
-                                        {'name': i, 'id': i, 'deletable': True} for i in sorted(df_freq.columns) if i!='total_set'
-                                    ],
-                                page_current = 0,
-                                page_size = PAGE_SIZE,
-                                page_action = 'custom',
-                                sort_action='custom',
-                                sort_mode='multi',
-                                filter_action='custom',
-                                filter_query='',
-                                sort_by=[],
-                                style_table={'minWidth': '100%'})
-                                ])
-                            ])
-                        ],md=4),
-                        dbc.Col([
-                            dbc.Card([
-                                dbc.CardBody([
-                                dbc.Label('병용처방항목 필터링'),
-                                dcc.Dropdown(id = 'filter-asso-elements',
-                                    options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
-                                    placeholder = '필터링할 성분 선택', disabled = False, multi = True
-                                )
-                                ])
-                            ],style={'margin-bottom':'10px'}),
-                            dbc.Card([
-                                dbc.CardBody([
-                            html.Div(id='asso-download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'asso_csv_link', href="/dashboard2/download_asso_csv"),
-                            html.Span(id = 'asso_len', className = 'size_explain')]),
-                            dt.DataTable(id = 'datatable-paging-asso',
-                                columns=[
-                                        {'name': i, 'id': i, 'deletable': True} for i in sorted(df_asso.columns) if i!='total_set'
-                                    ],
-                                page_current = 0,
-                                page_size = PAGE_SIZE,
-                                page_action = 'custom',
-                                sort_action='custom',
-                                sort_mode='multi',
-                                filter_action='custom',
-                                filter_query='',
-                                sort_by=[],
-                                style_table={'minWidth': '100%'})
-                                ])
-                            ])
-                        ],md=5)
+                            dbc.Row([
+                                dbc.Card([
+                                    dbc.CardBody([
+                                        dbc.Label('병용처방항목 필터링'),
+                                        dcc.Dropdown(id = 'filter-freq-elements',
+                                            options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
+                                            placeholder = '필터링할 성분 선택', disabled = False, multi = True
+                                        )
+                                    ])
+                                ],style={'margin-bottom':'10px', 'width' : '100%'}),
+                                dbc.Card([
+                                    dbc.CardBody([
+                                        html.Div(id='freq-download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'freq_csv_link', href="/dashboard2/download_freq_csv"),
+                                        html.Span(id = 'freq_len', className = 'size_explain') ]),
+                                        dt.DataTable(id = 'datatable-paging-freq',
+                                            columns=[
+                                                    {'name': i, 'id': i, 'deletable': True} for i in sorted(df_freq.columns) if i!='total_set'
+                                                ],
+                                            page_current = 0,
+                                            page_size = PAGE_SIZE,
+                                            page_action = 'custom',
+                                            sort_action='custom',
+                                            sort_mode='multi',
+                                            filter_action='custom',
+                                            filter_query='',
+                                            sort_by=[],
+                                            style_cell = {'whiteSpace' : 'normal', 'height' : 'auto'},
+                                            style_table={'minWidth': '100%', 'overflowX': 'auto'})
+                                    ])
+                                ], style={'width': '100%', 'minHeight' : '500px', 'padding' : '15px'})
+                            ], style = {'margin-bottom' : '40px'}), #,md=4
+                            dbc.Row([
+                                dbc.Card([
+                                    dbc.CardBody([
+                                        dbc.Label('병용처방항목 필터링'),
+                                        dcc.Dropdown(id = 'filter-asso-elements',
+                                            options = [{'label' :  str(a)+' : '+str(b), 'value' : str(a)} for a, b in zip(atc_list[0], atc_list[1])],
+                                            placeholder = '필터링할 성분 선택', disabled = False, multi = True
+                                        )
+                                    ])
+                                ],style={'margin-bottom':'10px', 'width' : '100%'}),
+                                dbc.Card([
+                                    dbc.CardBody([
+                                        html.Div(id='asso-download-button', children=[html.A(html.Button('다운로드', n_clicks = 0), id = 'asso_csv_link', href="/dashboard2/download_asso_csv"),
+                                        html.Span(id = 'asso_len', className = 'size_explain')]),
+                                        dt.DataTable(id = 'datatable-paging-asso',
+                                            columns=[
+                                                    {'name': i, 'id': i, 'deletable': True} for i in sorted(df_asso.columns) if i!='total_set'
+                                                ],
+                                            page_current = 0,
+                                            page_size = PAGE_SIZE,
+                                            page_action = 'custom',
+                                            sort_action='custom',
+                                            sort_mode='multi',
+                                            filter_action='custom',
+                                            filter_query='',
+                                            sort_by=[],
+                                            style_cell = {'whiteSpace' : 'normal', 'height' : 'auto'},
+                                            style_table={'minWidth': '100%', 'overflowX': 'auto'})
+                                    ])
+                                ], style={'width': '100%', 'minHeight' : '500px', 'padding' : '15px'})
+                            ]) ],md=9) #,md=5
                     ]
                 ),
                 html.Div(id = 'intermediate_freq', style = {'display' : 'none'}),
@@ -295,8 +300,10 @@ def init_callback(app, atc_list) :
         page=page_current
         size=page_size
         total_page = math.ceil(len(dff)/PAGE_SIZE)
-        return [dff.iloc[
-        page*size : (page + 1) * size, np.r_[:4]].to_dict('records'), total_page]
+        result_df = (dff.iloc[page*size : (page + 1) * size, np.r_[:4]]).copy()
+        result_df['출현집합'] = result_df['출현집합'].apply(lambda x : ', '
+        .join(list(map(lambda i : atc_df[atc_df['주성분코드'] == i].iloc[0]['Spec'] if (atc_df['주성분코드'] == i).any() else i, x))))
+        return [result_df.to_dict('records'), total_page]
 
     @app.callback(
         [Output('datatable-paging-asso', 'data'),Output('datatable-paging-asso', 'page_count')],
@@ -335,8 +342,12 @@ def init_callback(app, atc_list) :
         page=page_current
         size=page_size
         total_page = math.ceil(len(dff)/PAGE_SIZE)
-        return [dff.iloc[
-        page*size : (page + 1) * size, np.r_[:5]].to_dict('records'), total_page]
+        result_df = (dff.iloc[page*size : (page + 1) * size, np.r_[:5]]).copy()
+        result_df['연관약품코드(전)'] = result_df['연관약품코드(전)'].apply(lambda x : ', '
+        .join(list(map(lambda i : atc_df[atc_df['주성분코드'] == i].iloc[0]['Spec'] if (atc_df['주성분코드'] == i).any() else i, x))))
+        result_df['연관약품코드(후)'] = result_df['연관약품코드(후)'].apply(lambda x : ', '
+        .join(list(map(lambda i : atc_df[atc_df['주성분코드'] == i].iloc[0]['Spec'] if (atc_df['주성분코드'] == i).any() else i, x))))
+        return [result_df.to_dict('records'), total_page]
 
     @app.server.route('/dashboard2/download_asso_csv')
     def download_asso_csv() :
@@ -345,7 +356,12 @@ def init_callback(app, atc_list) :
         output_stream.write(u'\ufeff')
         #global df_asso
         #dff = df_asso.reset_index(drop=True)
-        dff=df_asso.set_index('연관약품코드(전)')
+        dff = df_asso.copy()
+        dff['연관약품코드(전)'] = dff['연관약품코드(전)'].apply(lambda x : ', '
+        .join(list(map(lambda i : atc_df[atc_df['주성분코드'] == i].iloc[0]['Spec'] if (atc_df['주성분코드'] == i).any() else i, x))))
+        dff['연관약품코드(후)'] = dff['연관약품코드(후)'].apply(lambda x : ', '
+        .join(list(map(lambda i : atc_df[atc_df['주성분코드'] == i].iloc[0]['Spec'] if (atc_df['주성분코드'] == i).any() else i, x))))
+        dff=dff.set_index('연관약품코드(전)')
         print(time.time()-start)
         print("dataframe ready")
         start = time.time()
@@ -369,7 +385,10 @@ def init_callback(app, atc_list) :
         #df = pd.read_json(result_json, orient='split')
         #global df_freq
         #dff = df_freq.reset_index(drop=True)
-        dff=df_freq.set_index('출현집합')
+        dff = df_freq.copy()
+        dff['출현집합'] = dff['출현집합'].apply(lambda x : ', '
+        .join(list(map(lambda i : atc_df[atc_df['주성분코드'] == i].iloc[0]['Spec'] if (atc_df['주성분코드'] == i).any() else i, x))))
+        dff= dff.set_index('출현집합')
         print(time.time()-start)
         print("dataframe ready")
         start = time.time()

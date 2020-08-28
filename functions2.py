@@ -82,17 +82,12 @@ def calc_fpgrowth(df,element,min_support) :
       frequent_itemsets.sort_values(by=['support','length'],ascending=False,inplace=True)
       print(frequent_itemsets.head())
       # association rule
-      rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.5)
+      rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.01)
       rules['total_set'] = [frozenset.union(*X) for X in rules[['antecedents', 'consequents']].values]
       #rules=rules[rules["consequents"]==frozenset(element)]
       rules=rules[~rules['consequents'].apply(lambda x : x.isdisjoint(frozenset(element)))]
       #rules=rules[~rules["antecedents"].apply(lambda x : x.isdisjoint(frozenset(keyword)))]
       rules.sort_values(by=['confidence','antecedent support'],ascending=False,inplace=True) # 지지도 : (동시 포함 수) / (전체 수)
-      rules["consequents"] = rules["consequents"].apply(lambda x : ', '.join(list(x)))
-      rules["antecedents"] = rules["antecedents"].apply(lambda x: ', '.join(list(x)))
-      #atc_df=pd.read_csv('code_list.csv',encoding='utf-8')
-      #rules["consequents"] = rules["consequents"].apply(lambda x : ', '.join(list(map(lambda i : [atc_df['주성분코드'] == i].iloc[0]['Spec'], x))))
-      #rules["antecedents"] = rules["antecedents"].apply(lambda x : ', '.join(list(map(lambda i : [atc_df['주성분코드'] == i].iloc[0]['Spec'], x))))
       rules['count']=len(df)*rules['support']
       rules['support']=100*rules['support']
       rules['confidence']=100*rules['confidence']
@@ -102,8 +97,6 @@ def calc_fpgrowth(df,element,min_support) :
       rules=rules.loc[:,['antecedents','consequents','support','count','confidence','total_set']]
       rules.columns=['연관약품코드(전)','연관약품코드(후)','지지도(%)','출현빈도','연관도(%)','total_set']
       frequent_itemsets["total_set"]=frequent_itemsets["itemsets"] 
-      frequent_itemsets["itemsets"] = frequent_itemsets["itemsets"].apply(lambda x : ', '.join(list(x)))
-      ##rules["itemsets"] = rules["itemsets"].apply(lambda x : ', '.join(list(map(lambda i : [atc_df['주성분코드'] == i].iloc[0]['Spec'], x))))
       frequent_itemsets['support']=frequent_itemsets['support']*100
       frequent_itemsets['support']=frequent_itemsets['support'].round(2)
       frequent_itemsets=frequent_itemsets.loc[:,['itemsets','support','count','length','total_set']]
